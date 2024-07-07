@@ -1,11 +1,12 @@
 using Microsoft.Extensions.Options;
 using ChatAppWsignalR.Hubs;
+using Microsoft.Azure.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR().AddAzureSignalR(builder.Configuration["AzureSignalRConnectionString"]);
 builder.Services.AddCors(options=>{
     options.AddDefaultPolicy(
         builder =>{
