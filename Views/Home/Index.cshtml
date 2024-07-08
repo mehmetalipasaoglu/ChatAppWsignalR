@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -7,52 +7,79 @@
     <div class="container">
         <div class="row">
             <div class="col-4">
+                <input type="text" class="form-control" id="roomName" placeholder="Room Name"/>
+                <button id="btnJoinRoom" class="btn btn-primary" type="button">Join Room</button>
+                <button id="btnLeaveRoom" class="btn btn-secondary" type="button" style="display:none;">Leave Room</button>
+            </div>
+        </div>
+        <div class="row" id="chatSection" style="display:none;">
+            <div class="col-4">
+                <input type="text" class="form-control" id="userName" placeholder="User Name"/>
                 <input type="text" class="form-control" id="message" placeholder="Message"/>
-                <input type="text" class="form-control" id="userName" placeholder="User Name"/>            
                 <button id="btnSendMessage" class="btn btn-primary" type="button">Send</button>
             </div>
-            <div class="col-8">
+            <div class="col-6">
                 <ul class="list-group" id="messages"></ul>
             </div>
         </div>
     </div>
 </div>
+
 @section Scripts{
     <script>
         const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/chatHub")
-        .configureLogging(signalR.LogLevel.Information)
-        .build();
+            .withUrl("/chatHub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
 
-        async function start(){
-            try{
+        async function start() {
+            try {
                 await connection.start();
                 console.log("SignalR Connected.");
-            }
-            catch(err){
+            } catch (err) {
                 console.error(err);
-                setTimeout(start,5000);
+                setTimeout(start, 5000);
             }
         }
-        connection.onclose(async()=>{
+
+        connection.onclose(async () => {
             await start();
         });
 
         start();
-        $('#btnSendMessage').click(function(){
-            try{
-                var nickName = $('#userName').val(); 
+
+        $('#btnJoinRoom').click(function () {
+            var roomName = $('#roomName').val();
+            connection.invoke("JoinGroup", roomName).catch(err => console.error(err));
+            $('#chatSection').show();
+            $('#btnJoinRoom').hide();
+            $('#btnLeaveRoom').show();
+        });
+
+        $('#btnLeaveRoom').click(function () {
+            var roomName = $('#roomName').val();
+            connection.invoke("LeaveGroup", roomName).catch(err => console.error(err));
+            $('#chatSection').hide();
+            $('#btnJoinRoom').show();
+            $('#btnLeaveRoom').hide();
+        });
+
+        $('#btnSendMessage').click(function () {
+            try {
+                var nickName = $('#userName').val();
                 var message = $('#message').val();
-                connection.invoke("SendMessage",nickName,message);
-            }catch(err){
+                var roomName = $('#roomName').val();
+                connection.invoke("SendMessage", nickName, message, roomName).catch(err => console.error(err));
+            } catch (err) {
                 console.error(err);
             }
         });
-        $().ready(function(){
-            connection.on("ReceiveMessage",(user,message)=>{
-                console.log(user,message);
+
+        $().ready(function () {
+            connection.on("ReceiveMessage", (user, message) => {
+                console.log(user, message);
                 $('#messages').append(
-                    `<li class="list-group-item">${user}:${message}</li>`
+                    `<li class="list-group-item">${user}: ${message}</li>`
                 );
             });
         });
