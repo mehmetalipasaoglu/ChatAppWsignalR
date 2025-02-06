@@ -25,7 +25,7 @@ dotnet restore
 ### 3. Run the Application Locally
 ```sh
 dotnet run
-
+```
 
 
 ## Usage
